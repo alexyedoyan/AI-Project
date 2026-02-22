@@ -22,17 +22,16 @@ Return ONLY a valid JSON object with exactly these keys:
 - "recommendations": list of 3 strings, each describing a suitable crop and why
 - "varieties": dict where key is crop name, value is list of 2-3 best varieties with short description
 - "planting_windows": dict where key is crop name, value is planting month range
+- "fertilizer": dict where key is crop name, value is string with fertilizer type and amount per m2
+- "irrigation": dict where key is crop name, value is string with water amount in liters per week
 - "tips": dict where key is crop name, value is one-line management tip
 - "risks": list of strings describing risks
 
-Example for "varieties":
-{{
-  "Tomato": [
-    "Brandywine — крупноплодный, богатый вкус, хорош для тёплого климата",
-    "Cherry Belle — скороспелый, устойчив к болезням",
-    "Roma — мясистый, идеален для консервирования"
-  ]
-}}
+Example for "fertilizer":
+{{"Tomato": "Азот 20г/м², Фосфор 15г/м², Калий 25г/м² — вносить перед посадкой"}}
+
+Example for "irrigation":
+{{"Tomato": "15-20 литров/м² в неделю, поливать утром"}}
 
 Respond in the same language as the "language" field in the JSON.
 Do not include any text outside the JSON. Do not use markdown.

@@ -324,7 +324,20 @@ def format_result(plan: dict, data: dict, lang: str) -> str:
         lines.append(t(lang, "windows_title"))
         for crop, months in windows.items():
             lines.append(f"🗓 *{crop}*: {months}\n")
+    # Удобрения
+    fertilizer = plan.get("fertilizer", {})
+    if fertilizer:
+        lines.append("\n🌿 *Удобрения:*\n" if lang == "ru" else "\n🌿 *Fertilizer:*\n")
+        for crop, fert in fertilizer.items():
+            lines.append(f"🧪 *{crop}*: {fert}\n")
 
+    # Полив
+    irrigation = plan.get("irrigation", {})
+    if irrigation:
+        lines.append("\n💧 *Норма полива:*\n" if lang == "ru" else "\n💧 *Irrigation:*\n")
+        for crop, water in irrigation.items():
+            lines.append(f"💧 *{crop}*: {water}\n")
+            
     tips = plan.get("tips", {})
     if tips:
         lines.append(t(lang, "tips_title"))
