@@ -317,22 +317,31 @@ async def run_analysis(message: Message, state: FSMContext, bot: Bot, edit: bool
 
     try:
         # Запускаем анализ в отдельном потоке чтобы не блокировать event loop
-        loop = asyncio.get_event_loop()
-        plan = await loop.run_in_executor(None, analyze_field, data, lang)
+    loop = asyncio.get_event_loop()
+plan = await asyncio.wait_for(
+    loop.run_in_executor(None, analyze_field, data, lang),
+    timeout=30.0
+)
 
-        result = format_result(plan, data, lang)
+result = format_result(plan, data, lang)
 
-        await analyzing_msg.edit_text(
-            result,
-            parse_mode="Markdown",
-            reply_markup=result_keyboard(lang)
-        )
+await analyzing_msg.edit_text(
+    result,
+    parse_mode="Markdown",
+    reply_markup=result_keyboard(lang)
+)
 
-    except Exception as e:
-        log.error(f"Analysis error: {e}")
-        await analyzing_msg.edit_text(
-            t(lang, "error"), parse_mode="Markdown"
-        )
+except asyncio.TimeoutError:
+    await analyzing_msg.edit_text(
+        "⏱ Превышено время ожидания. Попробуйте ещё раз: /newfield" if lang == "ru"
+        else "⏱ Timed out. Try again: /newfield",
+        parse_mode="Markdown"
+    )
+except Exception as e:
+    log.error(f"Analysis error: {e}")
+    await analyzing_msg.edit_text(
+        t(lang, "error"), parse_mode="Markdown"
+    )
 
     await state.clear()
     await state.update_data(lang=lang)
@@ -346,7 +355,13 @@ def format_result(plan: dict, data: dict, lang: str) -> str:
     lines.append(t(lang, "recommendations_title"))
     for i, rec in enumerate(plan.get("recommendations", []), 1):
         lines.append(f"{i}. {rec}\n")
-
+    varieties = plan.get("varieties", {})
+    if varieties:
+        lines.append("\n🌿 *Рекомендуемые сорта:*\n" if lang == "ru" else "\n🌿 *Recommended varieties:*\n")
+        for crop, vars_list in varieties.items():
+            lines.append(f"\n*{crop}:*\n")
+            for v in vars_list:
+                lines.append(f"  • {v}\n")
     # Сроки посева
     windows = plan.get("planting_windows", {})
     if windows:
