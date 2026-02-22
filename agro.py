@@ -16,13 +16,23 @@ You will receive a JSON with field properties.
 Field data:
 {field_json}
 
-Based on the field (soil type, pH, organic content, clay/sand %, area, local climate) produce a crop planting plan.
+Based on the field produce a crop planting plan.
 
 Return ONLY a valid JSON object with exactly these keys:
 - "recommendations": list of 3 strings, each describing a suitable crop and why
-- "planting_windows": dict where key is crop name, value is planting month range (e.g. "March - May")
+- "varieties": dict where key is crop name, value is list of 2-3 best varieties with short description
+- "planting_windows": dict where key is crop name, value is planting month range
 - "tips": dict where key is crop name, value is one-line management tip
-- "risks": list of strings describing risks (pests, frost, drought, etc.)
+- "risks": list of strings describing risks
+
+Example for "varieties":
+{{
+  "Tomato": [
+    "Brandywine — крупноплодный, богатый вкус, хорош для тёплого климата",
+    "Cherry Belle — скороспелый, устойчив к болезням",
+    "Roma — мясистый, идеален для консервирования"
+  ]
+}}
 
 Respond in the same language as the "language" field in the JSON.
 Do not include any text outside the JSON. Do not use markdown.
