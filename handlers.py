@@ -16,9 +16,6 @@ from agro import analyze_field, area_to_ha, parse_area
 router = Router()
 log = logging.getLogger(__name__)
 
-# ──────────────────────────────────────────────
-# /start
-# ──────────────────────────────────────────────
 @router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
@@ -57,9 +54,6 @@ async def cmd_help(message: Message, state: FSMContext):
     )
     await message.answer(help_text, parse_mode="Markdown")
 
-# ──────────────────────────────────────────────
-# Выбор языка
-# ──────────────────────────────────────────────
 @router.callback_query(FieldForm.language, F.data.in_({"lang_ru", "lang_en"}))
 async def cb_language(callback: CallbackQuery, state: FSMContext):
     lang = "ru" if callback.data == "lang_ru" else "en"
@@ -68,9 +62,6 @@ async def cb_language(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(t(lang, "lang_set"), parse_mode="Markdown")
     await callback.answer()
 
-# ──────────────────────────────────────────────
-# Название поля
-# ──────────────────────────────────────────────
 @router.message(FieldForm.name)
 async def step_name(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -83,9 +74,6 @@ async def step_name(message: Message, state: FSMContext):
         reply_markup=location_keyboard(lang)
     )
 
-# ──────────────────────────────────────────────
-# Геолокация (кнопка)
-# ──────────────────────────────────────────────
 @router.message(FieldForm.location, F.content_type == ContentType.LOCATION)
 async def step_location_geo(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -100,9 +88,6 @@ async def step_location_geo(message: Message, state: FSMContext):
         reply_markup=remove_keyboard()
     )
 
-# ──────────────────────────────────────────────
-# Координаты текстом
-# ──────────────────────────────────────────────
 @router.message(FieldForm.location)
 async def step_location_text(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -120,9 +105,6 @@ async def step_location_text(message: Message, state: FSMContext):
     except Exception:
         await message.answer(t(lang, "invalid_coords"), parse_mode="Markdown")
 
-# ──────────────────────────────────────────────
-# Площадь
-# ──────────────────────────────────────────────
 @router.message(FieldForm.area)
 async def step_area(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -140,9 +122,6 @@ async def step_area(message: Message, state: FSMContext):
     except Exception:
         await message.answer(t(lang, "invalid_area"), parse_mode="Markdown")
 
-# ──────────────────────────────────────────────
-# Тип почвы (inline кнопки)
-# ──────────────────────────────────────────────
 @router.callback_query(FieldForm.soil_type, F.data.startswith("soil_"))
 async def cb_soil_type(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -158,9 +137,6 @@ async def cb_soil_type(callback: CallbackQuery, state: FSMContext):
     )
     await callback.answer()
 
-# ──────────────────────────────────────────────
-# pH почвы
-# ──────────────────────────────────────────────
 @router.callback_query(FieldForm.soil_ph, F.data == "skip")
 async def cb_skip_ph(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -189,9 +165,6 @@ async def step_ph(message: Message, state: FSMContext):
     except ValueError:
         await message.answer(t(lang, "invalid_number"), parse_mode="Markdown")
 
-# ──────────────────────────────────────────────
-# Органика
-# ──────────────────────────────────────────────
 @router.callback_query(FieldForm.soil_organic, F.data == "skip")
 async def cb_skip_organic(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -220,9 +193,6 @@ async def step_organic(message: Message, state: FSMContext):
     except ValueError:
         await message.answer(t(lang, "invalid_number"), parse_mode="Markdown")
 
-# ──────────────────────────────────────────────
-# Глина
-# ──────────────────────────────────────────────
 @router.callback_query(FieldForm.soil_clay, F.data == "skip")
 async def cb_skip_clay(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -251,9 +221,6 @@ async def step_clay(message: Message, state: FSMContext):
     except ValueError:
         await message.answer(t(lang, "invalid_number"), parse_mode="Markdown")
 
-# ──────────────────────────────────────────────
-# Песок
-# ──────────────────────────────────────────────
 @router.callback_query(FieldForm.soil_sand, F.data == "skip")
 async def cb_skip_sand(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
@@ -282,9 +249,6 @@ async def step_sand(message: Message, state: FSMContext):
     except ValueError:
         await message.answer(t(lang, "invalid_number"), parse_mode="Markdown")
 
-# ──────────────────────────────────────────────
-# Заметки → запуск анализа
-# ──────────────────────────────────────────────
 @router.callback_query(FieldForm.soil_notes, F.data == "skip")
 async def cb_skip_notes(callback: CallbackQuery, state: FSMContext, bot: Bot):
     await state.update_data(soil_notes="")
@@ -296,14 +260,10 @@ async def step_notes(message: Message, state: FSMContext, bot: Bot):
     await state.update_data(soil_notes=message.text.strip())
     await run_analysis(message, state, bot, edit=False)
 
-# ──────────────────────────────────────────────
-# Анализ и результат
-# ──────────────────────────────────────────────
 async def run_analysis(message: Message, state: FSMContext, bot: Bot, edit: bool = False):
     data = await state.get_data()
     lang = data.get("lang", "ru")
 
-    # Сообщение "анализирую..."
     if edit:
         analyzing_msg = await message.edit_text(
             t(lang, "analyzing"), parse_mode="Markdown"
@@ -316,32 +276,28 @@ async def run_analysis(message: Message, state: FSMContext, bot: Bot, edit: bool
     await state.set_state(FieldForm.analyzing)
 
     try:
-        # Запускаем анализ в отдельном потоке чтобы не блокировать event loop
-    loop = asyncio.get_event_loop()
-plan = await asyncio.wait_for(
-    loop.run_in_executor(None, analyze_field, data, lang),
-    timeout=30.0
-)
-
-result = format_result(plan, data, lang)
-
-await analyzing_msg.edit_text(
-    result,
-    parse_mode="Markdown",
-    reply_markup=result_keyboard(lang)
-)
-
-except asyncio.TimeoutError:
-    await analyzing_msg.edit_text(
-        "⏱ Превышено время ожидания. Попробуйте ещё раз: /newfield" if lang == "ru"
-        else "⏱ Timed out. Try again: /newfield",
-        parse_mode="Markdown"
-    )
-except Exception as e:
-    log.error(f"Analysis error: {e}")
-    await analyzing_msg.edit_text(
-        t(lang, "error"), parse_mode="Markdown"
-    )
+        loop = asyncio.get_event_loop()
+        plan = await asyncio.wait_for(
+            loop.run_in_executor(None, analyze_field, data, lang),
+            timeout=30.0
+        )
+        result = format_result(plan, data, lang)
+        await analyzing_msg.edit_text(
+            result,
+            parse_mode="Markdown",
+            reply_markup=result_keyboard(lang)
+        )
+    except asyncio.TimeoutError:
+        await analyzing_msg.edit_text(
+            "⏱ Превышено время ожидания. Попробуйте ещё раз: /newfield" if lang == "ru"
+            else "⏱ Timed out. Try again: /newfield",
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        log.error(f"Analysis error: {e}")
+        await analyzing_msg.edit_text(
+            t(lang, "error"), parse_mode="Markdown"
+        )
 
     await state.clear()
     await state.update_data(lang=lang)
@@ -351,10 +307,10 @@ def format_result(plan: dict, data: dict, lang: str) -> str:
     lines = [f"🌱 *ПЛАН ПОСЕВА — {name}*\n" if lang == "ru" else f"🌱 *PLANTING PLAN — {name}*\n"]
     lines.append("─" * 28 + "\n")
 
-    # Рекомендации
     lines.append(t(lang, "recommendations_title"))
     for i, rec in enumerate(plan.get("recommendations", []), 1):
         lines.append(f"{i}. {rec}\n")
+
     varieties = plan.get("varieties", {})
     if varieties:
         lines.append("\n🌿 *Рекомендуемые сорта:*\n" if lang == "ru" else "\n🌿 *Recommended varieties:*\n")
@@ -362,21 +318,19 @@ def format_result(plan: dict, data: dict, lang: str) -> str:
             lines.append(f"\n*{crop}:*\n")
             for v in vars_list:
                 lines.append(f"  • {v}\n")
-    # Сроки посева
+
     windows = plan.get("planting_windows", {})
     if windows:
         lines.append(t(lang, "windows_title"))
         for crop, months in windows.items():
             lines.append(f"🗓 *{crop}*: {months}\n")
 
-    # Советы
     tips = plan.get("tips", {})
     if tips:
         lines.append(t(lang, "tips_title"))
         for crop, tip in tips.items():
             lines.append(f"💡 *{crop}*: {tip}\n")
 
-    # Риски
     risks = plan.get("risks", [])
     if risks:
         lines.append(t(lang, "risks_title"))
@@ -385,9 +339,6 @@ def format_result(plan: dict, data: dict, lang: str) -> str:
 
     return "".join(lines)
 
-# ──────────────────────────────────────────────
-# Кнопка "Новое поле"
-# ──────────────────────────────────────────────
 @router.callback_query(F.data == "new_field")
 async def cb_new_field(callback: CallbackQuery, state: FSMContext):
     data = await state.get_data()
